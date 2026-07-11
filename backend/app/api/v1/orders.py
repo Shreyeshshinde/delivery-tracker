@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.models.order import Order
 from app.models.status_history import StatusHistory
 from app.models.user import User, UserRole
+from app.models.user import UserRole
 from app.schemas.order import (
     OrderQuoteRequest, OrderQuoteResponse,
     OrderCreateRequest, OrderOut,
@@ -56,6 +57,31 @@ async def create_order_endpoint(
     """
     order = await create_order(db, payload, current_user)
     return order
+
+@router.get("", response_model=list[OrderOut])
+async def list_my_orders(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Customers see only their own orders. Agents see orders assigned to them.
+    Admins see everything (use GET /admin/orders for filtering by status/zone
+    — this endpoint is the simple "my orders" view for the other two roles).
+    """
+    if current_user.role == UserRole.CUSTOMER:
+        stmt = select(Order).where(Order.customer_id == current_user.id)
+    elif current_user.role == UserRole.AGENT:
+        from app.models.agent import Agent
+        agent = await db.scalar(select(Agent).where(Agent.user_id == current_user.id))
+        if agent is None:
+            return []
+        stmt = select(Order).where(Order.agent_id == agent.id)
+    else:  # admin
+        stmt = select(Order)
+
+    stmt = stmt.order_by(Order.created_at.desc())
+    result = await db.scalars(stmt)
+    return result.all()
 
 @router.post("/{order_id}/auto-assign", response_model=OrderOut)
 async def auto_assign(
