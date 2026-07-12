@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,6 +34,8 @@ async def list_zones(
     return result.all()
 
 
+from sqlalchemy.exc import IntegrityError
+
 @router.post("/{zone_id}/pincodes", response_model=list[ZonePincodeOut], status_code=201)
 async def assign_pincodes_to_zone(
     zone_id: str,
@@ -51,7 +53,18 @@ async def assign_pincodes_to_zone(
         db.add(mapping)
         created.append(mapping)
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "One or more of these pincodes is already assigned to a zone. "
+                "Each pincode can only belong to one zone at a time."
+            ),
+        )
+
     for m in created:
         await db.refresh(m)
     return created
