@@ -54,7 +54,7 @@ async def _send_email_async(notification_log_id: str) -> None:
                     msg["From"] = settings.SMTP_FROM
                     msg["To"] = customer.email
 
-                    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+                    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
                         server.starttls()
                         server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                         server.send_message(msg)
