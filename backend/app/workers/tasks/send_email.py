@@ -24,6 +24,7 @@ async def _send_email_async(notification_log_id: str) -> None:
         async with SessionLocal() as db:
             log = await db.get(NotificationLog, uuid.UUID(notification_log_id))
             if log is None:
+                print(f"[EMAIL TASK] No NotificationLog found for id={notification_log_id}")
                 return
 
             order = await db.get(Order, log.order_id)
@@ -37,8 +38,17 @@ async def _send_email_async(notification_log_id: str) -> None:
                 f"Charge: {order.charge}\n"
             )
 
+            print(
+                f"[EMAIL TASK] SMTP_HOST={settings.SMTP_HOST!r} "
+                f"SMTP_USER={settings.SMTP_USER!r} "
+                f"SMTP_FROM={settings.SMTP_FROM!r} "
+                f"to={customer.email}"
+            )
+
             try:
                 if settings.SMTP_HOST:
+                    print(f"[REAL SEND ATTEMPT] connecting to {settings.SMTP_HOST}:{settings.SMTP_PORT}")
+
                     msg = MIMEText(body)
                     msg["Subject"] = subject
                     msg["From"] = settings.SMTP_FROM
@@ -48,12 +58,15 @@ async def _send_email_async(notification_log_id: str) -> None:
                         server.starttls()
                         server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                         server.send_message(msg)
+
+                    print(f"[REAL SEND SUCCESS] to={customer.email}")
                 else:
-                    print(f"[SIMULATED EMAIL] to={customer.email} subject={subject!r}")
+                    print(f"[SIMULATED EMAIL] SMTP_HOST is empty, to={customer.email} subject={subject!r}")
 
                 log.status = NotificationStatus.SENT
                 log.attempts += 1
-            except Exception:
+            except Exception as e:
+                print(f"[EMAIL SEND FAILED] to={customer.email} error={type(e).__name__}: {e}")
                 log.status = NotificationStatus.FAILED
                 log.attempts += 1
                 await db.commit()
