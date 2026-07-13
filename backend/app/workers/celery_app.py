@@ -1,4 +1,5 @@
 from celery import Celery
+import ssl
 
 from app.core.config import settings
 
@@ -13,13 +14,9 @@ celery_app.conf.update(
     result_serializer="json",
     accept_content=["json"],
     task_track_started=True,
-    task_acks_late=True,  # if a worker crashes mid-send, the task isn't lost
+    task_acks_late=True,
+    broker_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
+    redis_backend_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
 )
 
-# Explicit imports (not autodiscover_tasks — that's Django-style and looks
-# for a single tasks.py per package, which doesn't match our layout).
-# Importing these here is what actually registers the @celery_app.task
-# decorated functions with this Celery instance. Safe from circular import
-# because celery_app is already fully defined above by the time these
-# modules import it back.
 from app.workers.tasks import send_email, send_sms  # noqa: E402, F401
