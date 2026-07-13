@@ -7,17 +7,13 @@ from app.workers.tasks.send_sms import send_sms_task
 
 
 async def enqueue_notification(db: AsyncSession, order: Order) -> None:
-    """
-    Writes a NotificationLog row for each channel, then hands off to Celery.
-    This is the decoupling point: the API request that changed the order's
-    status commits and returns immediately — sending the actual email/SMS
-    (and any retries on failure) happens on a worker process, not here.
-    """
     email_log = NotificationLog(order_id=order.id, channel=NotificationChannel.EMAIL)
     sms_log = NotificationLog(order_id=order.id, channel=NotificationChannel.SMS)
     db.add(email_log)
     db.add(sms_log)
-    await db.flush()  # get their ids before dispatching
+    await db.commit()  # must actually commit — flush alone isn't visible to
+    await db.refresh(email_log)  # other connections (the worker uses a
+    await db.refresh(sms_log)  # completely separate DB connection)
 
     send_email_task.delay(str(email_log.id))
     send_sms_task.delay(str(sms_log.id))
