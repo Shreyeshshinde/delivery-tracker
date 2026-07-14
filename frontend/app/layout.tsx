@@ -21,7 +21,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Waybill — Delivery Tracker",
+  title: "Delivery Tracker",
   description: "Last-mile delivery management platform",
 };
 

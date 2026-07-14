@@ -29,12 +29,11 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-paper">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
+          <div className="text-center mb-8">
           <div className="font-display font-extrabold text-2xl tracking-tight text-ink">
-            WAYBILL
+            Delivery Tracker
           </div>
-          <div className="font-[family-name:var(--font-plex-mono)] text-[10px] text-slate uppercase tracking-widest mt-1">
-            Delivery Ops Console
-          </div>
+        </div>
         </div>
 
         <div className="bg-white border border-line rounded-sm shadow-sm relative overflow-hidden">

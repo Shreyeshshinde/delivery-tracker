@@ -15,10 +15,7 @@ export default function Navbar() {
     <nav className="bg-ink text-paper px-6 py-4 flex items-center justify-between border-b-2 border-signal">
       <Link href={homeLink} className="flex items-baseline gap-2">
         <span className="font-display font-extrabold text-lg tracking-tight">
-          WAYBILL
-        </span>
-        <span className="font-[family-name:var(--font-plex-mono)] text-[10px] text-slate uppercase tracking-widest">
-          delivery ops
+          Delivery Tracker
         </span>
       </Link>
       <div className="flex items-center gap-5 text-sm">
