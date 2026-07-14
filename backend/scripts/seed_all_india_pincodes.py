@@ -65,7 +65,7 @@ execute_values(
 conn.commit()
 print("Pincodes inserted.")
 
-today = date.today()
+today = date(2026, 1, 1)
 one_year = today + timedelta(days=365)
 zone_ids = list(state_to_zone_id.values())
 
